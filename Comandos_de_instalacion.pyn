@@ -1,0 +1,70 @@
+# Servidor Web (EC2-6: WebServer)
+
+#!/bin/bash
+# Actualizar e instalar dependencias básicas
+apt-get update -y
+apt-get install -y python3-pip python3-venv nginx git
+
+# Clonar el repositorio y entrar en la carpeta del proyecto 
+cd /home/ubuntu
+git clone https://github.com/rjalamanac/SBD.git
+cd SBD/Tema\ 4/webapp/deploy/
+
+# Ejecutar el script de instalación del stack del repositorio
+chmod +x install_web_stack.sh
+./install_web_stack.sh
+
+# Configurar el Backend y lanzarlo
+# Nota: Asegúrate de editar aurora.env.template con tus credenciales antes
+chmod +x run_backend.sh
+./run_backend.sh &
+
+# Script para EC2-1: Spark Master
+
+#!/bin/bash
+apt-get update -y
+apt-get install -y openjdk-11-jdk python3-pip git
+
+# Instalar Spark 3.5.0 [cite: 19]
+wget https://archive.apache.org/dist/spark/spark-3.5.0/spark-3.5.0-bin-hadoop3.tgz
+tar -xvzf spark-3.5.0-bin-hadoop3.tgz
+mv spark-3.5.0-bin-hadoop3 /opt/spark
+
+# Iniciar el Master usando el script del repositorio
+/opt/spark/sbin/start-master.sh
+
+# Script para EC2-2, EC2-3 y EC2-4: Spark Workers
+#!/bin/bash
+apt-get update -y
+apt-get install -y openjdk-11-jdk python3-pip
+
+# Instalar Spark 3.5.0 [cite: 19]
+wget https://archive.apache.org/dist/spark/spark-3.5.0/spark-3.5.0-bin-hadoop3.tgz
+tar -xvzf spark-3.5.0-bin-hadoop3.tgz
+mv spark-3.5.0-bin-hadoop3 /opt/spark
+
+# Iniciar el Worker apuntando al Master
+/opt/spark/sbin/start-worker.sh spark://<IP_PRIVADA_MASTER>:7077
+
+
+#Script para EC2-5: Nodo Submit y Generación
+
+#!/bin/bash
+apt-get update -y
+apt-get install -y python3-pip git openjdk-11-jdk
+
+# Clonar repo para tener los generadores 
+cd /home/ubuntu
+git clone https://github.com/rjalamanac/SBD.git
+cd SBD/Tema\ 4/
+
+# Instalar librerías de generación y Spark
+pip3 install boto3 requests pandas pyspark==3.5.0
+
+# Ejecutar generador de negocio
+python3 generators/generate_business_data.py
+
+# Iniciar tráfico real hacia la EC2-6
+# Edita el script para poner la IP de tu EC2-6
+# python3 simulators/traffic_driver.py 
+
